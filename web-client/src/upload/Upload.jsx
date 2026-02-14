@@ -263,7 +263,7 @@ const Upload = ({ onBack }) => {
               </div>
               <div className="p-4 rounded-lg bg-white/5 border border-white/10">
                 <div className="text-green-400 font-bold mb-2">🔍 Accurate</div>
-                <p className="text-sm text-neutral-400">98.5% detection accuracy</p>
+                <p className="text-sm text-neutral-400">N.A detection accuracy</p>
               </div>
             </motion.div>
           </motion.div>
