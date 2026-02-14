@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Upload = ({ onBack }) => {
   const [file, setFile] = useState(null);
@@ -8,6 +8,7 @@ const Upload = ({ onBack }) => {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+  const [selectedVisualization, setSelectedVisualization] = useState(0);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -62,7 +63,8 @@ const Upload = ({ onBack }) => {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(`${API_URL}/predict-video`, {
+      // Request with Grad-CAM enabled
+      const response = await fetch(`${API_URL}/predict-video?include_gradcam=true`, {
         method: 'POST',
         body: formData,
       });
@@ -74,6 +76,11 @@ const Upload = ({ onBack }) => {
 
       const data = await response.json();
       setResult(data);
+      
+      // Set first visualization as default
+      if (data.gradcam_frames && data.gradcam_frames.length > 0) {
+        setSelectedVisualization(0);
+      }
     } catch (err) {
       setError(err.message || 'Error analyzing video. Make sure the backend is running.');
       console.error('Upload error:', err);
@@ -115,7 +122,7 @@ const Upload = ({ onBack }) => {
       <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/60 to-black/80 z-0" />
 
       {/* Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-6 py-16">
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-16">
         
         {/* Header */}
         <motion.div
@@ -134,7 +141,7 @@ const Upload = ({ onBack }) => {
           <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
             Verify Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">Media</span>
           </h1>
-          <p className="text-xl text-neutral-400">Upload a video to detect deepfakes instantly using our AI engine</p>
+          <p className="text-xl text-neutral-400">Upload a video to detect deepfakes with AI-powered heatmap visualization</p>
         </motion.div>
 
         {!result ? (
@@ -231,10 +238,10 @@ const Upload = ({ onBack }) => {
                     <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    Analyzing Video...
+                    Analyzing with Grad-CAM...
                   </span>
                 ) : (
-                  'Analyze Video'
+                  'Analyze Video with AI Heatmap'
                 )}
               </button>
             </form>
@@ -251,17 +258,16 @@ const Upload = ({ onBack }) => {
                 <p className="text-sm text-neutral-400">Analysis completes in seconds</p>
               </div>
               <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                <div className="text-purple-400 font-bold mb-2">🔒 Secure</div>
-                <p className="text-sm text-neutral-400">Videos processed privately</p>
+                <div className="text-purple-400 font-bold mb-2">🎯 Grad-CAM</div>
+                <p className="text-sm text-neutral-400">Visual heatmaps show detection areas</p>
               </div>
               <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                <div className="text-green-400 font-bold mb-2">🎯 Accurate</div>
+                <div className="text-green-400 font-bold mb-2">🔍 Accurate</div>
                 <p className="text-sm text-neutral-400">98.5% detection accuracy</p>
               </div>
             </motion.div>
           </motion.div>
         ) : (
-          /* Results View */
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -301,42 +307,93 @@ const Upload = ({ onBack }) => {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4 mb-8">
+              {/* Grad-CAM Visualizations */}
+              {result.gradcam_frames && result.gradcam_frames.length > 0 && (
+                <div className="mt-8 space-y-4">
+                  <h3 className="text-2xl font-bold text-white mb-4">
+                    🔍 AI Detection Heatmaps
+                  </h3>
+                  <p className="text-neutral-400 text-sm mb-4">
+                    Red areas indicate regions the AI identified as potential deepfake indicators
+                  </p>
+
+                  {/* Main Visualization Display */}
+                  <div className="rounded-lg overflow-hidden border border-white/20">
+                    <AnimatePresence mode="wait">
+                      <motion.img
+                        key={selectedVisualization}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        src={result.gradcam_frames[selectedVisualization].image}
+                        alt={`Grad-CAM visualization ${selectedVisualization + 1}`}
+                        className="w-full h-auto"
+                      />
+                    </AnimatePresence>
+                    <div className="p-4 bg-white/5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-neutral-300 text-sm">
+                          Frame {result.gradcam_frames[selectedVisualization].frame_number}
+                        </span>
+                        <span className="text-white font-semibold">
+                          Score: {(result.gradcam_frames[selectedVisualization].score * 100).toFixed(1)}%
+                        </span>
+                        {result.gradcam_frames[selectedVisualization].detection_frame && (
+                          <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs font-bold">
+                            DETECTION FRAME
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Thumbnail Navigation */}
+                  {result.gradcam_frames.length > 1 && (
+                    <div className="flex gap-2 overflow-x-auto pb-2">
+                      {result.gradcam_frames.map((vis, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedVisualization(idx)}
+                          className={`flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+                            selectedVisualization === idx
+                              ? 'border-cyan-400 scale-105'
+                              : 'border-white/20 hover:border-white/40'
+                          }`}
+                        >
+                          <img
+                            src={vis.image}
+                            alt={`Thumbnail ${idx + 1}`}
+                            className="w-24 h-24 object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-2 gap-4 mt-8">
                 <div className="p-4 rounded-lg bg-white/5 border border-white/10">
                   <p className="text-neutral-400 text-sm mb-1">File</p>
                   <p className="text-white font-mono truncate">{result.filename}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                  <p className="text-neutral-400 text-sm mb-1">Status</p>
-                  <p className="text-green-400 font-semibold">Analysis Complete ✓</p>
+                  <p className="text-neutral-400 text-sm mb-1">Visualizations</p>
+                  <p className="text-cyan-400 font-semibold">
+                    {result.gradcam_frames?.length || 0} Grad-CAM frames
+                  </p>
                 </div>
               </div>
 
               {/* Interpretation */}
-              <div className="p-4 rounded-lg bg-white/5 border border-white/10">
-                <p className="text-white font-semibold mb-2">How to interpret:</p>
+              <div className="p-4 rounded-lg bg-white/5 border border-white/10 mt-4">
+                <p className="text-white font-semibold mb-2">How to interpret the heatmaps:</p>
                 <ul className="text-neutral-400 text-sm space-y-1">
-                  {result.prediction === 'REAL' && (
-                    <>
-                      <li>• High confidence that this is authentic content</li>
-                      <li>• Detection model found no signs of artificial manipulation</li>
-                      <li>• Safe to share and trust this media</li>
-                    </>
-                  )}
-                  {result.prediction === 'FAKE' && (
-                    <>
-                      <li>• High confidence deepfake detected using EfficientNet model</li>
-                      <li>• Content shows signatures of AI-generated facial manipulation</li>
-                      <li>• Do not share or trust this media as authentic</li>
-                    </>
-                  )}
-                  {result.prediction === 'SUSPICIOUS' && (
-                    <>
-                      <li>• Detection model has moderate confidence of manipulation</li>
-                      <li>• Verify with manual inspection recommended</li>
-                      <li>• Content quality or compression may affect analysis</li>
-                    </>
-                  )}
+                  <li>• <span className="text-red-400 font-semibold">Red/Hot areas</span>: Regions with strongest deepfake indicators</li>
+                  <li>• <span className="text-blue-400 font-semibold">Blue/Cool areas</span>: Regions that appear more authentic</li>
+                  <li>• The model focuses on facial features, edges, and inconsistencies</li>
+                  <li>• Multiple frames show consistency of detection across the video</li>
                 </ul>
               </div>
             </div>
@@ -349,6 +406,7 @@ const Upload = ({ onBack }) => {
                   setPreview(null);
                   setResult(null);
                   setError(null);
+                  setSelectedVisualization(0);
                 }}
                 className="flex-1 px-8 py-4 rounded-full bg-white/10 border border-white/20 text-white font-bold text-lg hover:bg-white/20 transition-all duration-300"
               >

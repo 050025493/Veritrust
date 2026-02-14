@@ -17,9 +17,7 @@ const About = () => {
           viewport={{ once: true }}
           className="text-center mb-16"
         >
-          <span className="px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-xs font-mono uppercase tracking-widest backdrop-blur-md">
-            About Us
-          </span>
+          
           <h2 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight mt-6 mb-4">
             Trust in Every <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">Pixel</span>
           </h2>
@@ -35,7 +33,9 @@ const About = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            whileHover={{ y: -8 }}
+            transition={{ type: "spring", stiffness: 200 , damping: 10, delay: 0.1 }}
+            
             viewport={{ once: true }}
             className="p-8 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-cyan-500/30 transition-all duration-300 group"
           >
@@ -46,7 +46,7 @@ const About = () => {
             </div>
             <h3 className="text-xl font-bold text-white mb-3">AI Detection</h3>
             <p className="text-neutral-400 leading-relaxed">
-              Our EfficientNet-based model analyzes media with 98%+ accuracy, detecting even the most sophisticated deepfakes.
+              Our EfficientNet-based model analyzes media with N.A+ accuracy, detecting even the most sophisticated deepfakes.
             </p>
           </motion.div>
 
@@ -54,6 +54,7 @@ const About = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -8 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
             className="p-8 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-purple-500/30 transition-all duration-300 group"
@@ -73,6 +74,7 @@ const About = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -8 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             viewport={{ once: true }}
             className="p-8 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-green-500/30 transition-all duration-300 group"
@@ -100,19 +102,19 @@ const About = () => {
         >
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
-              <div className="text-4xl font-extrabold text-cyan-400 mb-2">98.5%</div>
+              <div className="text-4xl font-extrabold text-cyan-400 mb-2">N.A</div>
               <div className="text-neutral-400 text-sm">Detection Accuracy</div>
             </div>
             <div>
-              <div className="text-4xl font-extrabold text-purple-400 mb-2">50K+</div>
+              <div className="text-4xl font-extrabold text-purple-400 mb-2">N.A</div>
               <div className="text-neutral-400 text-sm">Media Analyzed</div>
             </div>
             <div>
-              <div className="text-4xl font-extrabold text-green-400 mb-2">&lt;2s</div>
+              <div className="text-4xl font-extrabold text-green-400 mb-2">N.A</div>
               <div className="text-neutral-400 text-sm">Avg. Processing Time</div>
             </div>
             <div>
-              <div className="text-4xl font-extrabold text-white mb-2">100%</div>
+              <div className="text-4xl font-extrabold text-white mb-2">N.A</div>
               <div className="text-neutral-400 text-sm">On-Chain Verified</div>
             </div>
           </div>

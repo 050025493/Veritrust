@@ -5,7 +5,7 @@ import os
 import logging
 
 from model_loader import load_model
-from inference import analyze_video
+from inference import analyze_video_with_gradcam
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -16,7 +16,7 @@ app = FastAPI(title="VeriTrust AI Engine", version="1.0.0")
 # CORS configuration (allow frontend to connect)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change to specific origin in production: ["http://localhost:5173"]
+    allow_origins=["*"],  # Change to specific origin in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -25,7 +25,7 @@ app.add_middleware(
 # Load model on startup
 model = load_model()
 
-ALLOWED_VIDEO_TYPES = {"video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo"}
+ALLOWED_VIDEO_TYPES = {"video/mp4", "video/mpeg", "video/quicktime", "video/x-msvideo", "video/webm"}
 MAX_FILE_SIZE = 500 * 1024 * 1024  # 500MB
 
 @app.get("/health")
@@ -61,16 +61,21 @@ async def predict_video(file: UploadFile = File(...)):
             temp_path = temp.name
         
         logger.info(f"Analyzing video: {file.filename}")
-        prediction, score = analyze_video(model, temp_path)
+        prediction, score, gradcam_frames = analyze_video_with_gradcam(
+            model, temp_path, generate_visualization=True
+        )
         
-        logger.info(f"Result - Prediction: {prediction}, Confidence: {score:.4f}")
+        logger.info(f"Result - Prediction: {prediction}, Confidence: {score:.4f}, Grad-CAM frames: {len(gradcam_frames)}")
         
-        return {
+        response = {
             "filename": file.filename,
             "prediction": prediction,
             "confidence": round(score, 4),
-            "status": "success"
+            "status": "success",
+            "gradcam_frames": gradcam_frames
         }
+        
+        return response
     
     except Exception as e:
         logger.error(f"Error analyzing video: {str(e)}")
